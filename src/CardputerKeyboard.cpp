@@ -1,6 +1,6 @@
 #include "CardputerKeyboard.h"
 
-#include <Arduino.h>
+#include <M5Cardputer.h>
 
 #include "keymap_phone_key.h"
 
@@ -66,5 +66,6 @@ char CardputerKeyboard::getKey() {
       }
     }
   }
+  Serial.println();
   return '\0';  // キーが見つからなかった場合はヌル文字を返す
 }
