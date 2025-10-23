@@ -1,18 +1,36 @@
 #ifndef _CARDPUTER_KEYBOARD_H_
 #define _CARDPUTER_KEYBOARD_H_
 
+#if __has_include(<M5Cardputer.h>)
+#include <M5Cardputer.h>
+#define USE_M5_CARDPUTER
+#else
 #include <Arduino.h>
-
+#endif
 #include "keymap.h"
-// FIFOバッファの実装
+/**
+ * @struct keyState
+ * @brief 物理キーの状態を表す構造体
+ * @var keyState::row
+ * 行番号（0〜7）
+ * @var keyState::col
+ * 列番号（0〜6）
+ * @var keyState::pressed
+ * 押下状態（true: 押下, false: 離上）
+ * @note 操作されたキーの情報がFIFOバッファに格納さる。
+ */
+struct keyState {
+  uint8_t row : 4;
+  uint8_t col : 3;
+  bool pressed : 1;
+} __attribute__((packed));
 
-using keyState = uint8_t[8];
 class KeyStateFIFO {
  public:
   KeyStateFIFO() : head(0), tail(0), count(0) {}
 
   // バッファにkeyStateを追加（FIFO）
-  bool push(const keyState& newKeyState) {
+  bool push(const keyState newKeyState) {
     if (count >= BUFFER_SIZE) {
       // バッファが満杯の場合、最も古いデータを上書き
       tail = (tail + 1) % BUFFER_SIZE;
@@ -21,9 +39,7 @@ class KeyStateFIFO {
     }
 
     // データをコピー
-    for (int i = 0; i < 8; i++) {
-      buffer[head][i] = newKeyState[i];
-    }
+    buffer[head] = newKeyState;
 
     head = (head + 1) % BUFFER_SIZE;
     return true;
@@ -36,9 +52,7 @@ class KeyStateFIFO {
     }
 
     // データをコピー
-    for (int i = 0; i < 8; i++) {
-      outKeyState[i] = buffer[tail][i];
-    }
+    outKeyState = buffer[tail];
 
     tail = (tail + 1) % BUFFER_SIZE;
     count--;
@@ -52,9 +66,7 @@ class KeyStateFIFO {
     }
 
     // データをコピー
-    for (int i = 0; i < 8; i++) {
-      outKeyState[i] = buffer[tail][i];
-    }
+    outKeyState = buffer[tail];
 
     return true;
   }
@@ -69,9 +81,7 @@ class KeyStateFIFO {
     size_t newestIndex = (head + BUFFER_SIZE - 1) % BUFFER_SIZE;
 
     // データをコピー
-    for (int i = 0; i < 8; i++) {
-      outKeyState[i] = buffer[newestIndex][i];
-    }
+    outKeyState = buffer[newestIndex];
 
     return true;
   }
@@ -99,9 +109,7 @@ class KeyStateFIFO {
     }
 
     size_t actualIndex = (tail + index) % BUFFER_SIZE;
-    for (int i = 0; i < 8; i++) {
-      outKeyState[i] = buffer[actualIndex][i];
-    }
+    outKeyState = buffer[actualIndex];
 
     return true;
   }
@@ -135,10 +143,7 @@ class YaCardputerKeyboard {
 
  protected:
   KeyStateFIFO keyStateFIFO;
-  keyState currentKeyState;
-  keyState previousKeyState;
   char keymap[8][7];
-  virtual void scanKeys(keyState& key) = 0;
 };
 
 #endif  // _CARDPUTER_KEYBOARD_H_
