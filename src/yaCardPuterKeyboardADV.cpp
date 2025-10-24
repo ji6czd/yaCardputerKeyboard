@@ -43,7 +43,7 @@ void YaCardputerKeyboardADV::updateKeyState() {
 
     keyEvent ev;
     ev.byte = keypad.getEvent();
-    keyState key;
+    KeyState key;
     key.col = (ev.data / 10);
     key.row = (ev.data % 10) - 1;
     key.pressed = ev.pressed;

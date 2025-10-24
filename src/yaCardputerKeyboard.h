@@ -19,7 +19,7 @@
  * 押下状態（true: 押下, false: 離上）
  * @note 操作されたキーの情報がFIFOバッファに格納さる。
  */
-struct keyState {
+struct KeyState {
   uint8_t row : 4;
   uint8_t col : 3;
   bool pressed : 1;
@@ -30,7 +30,7 @@ class KeyStateFIFO {
   KeyStateFIFO() : head(0), tail(0), count(0) {}
 
   // バッファにkeyStateを追加（FIFO）
-  bool push(const keyState newKeyState) {
+  bool push(const KeyState newKeyState) {
     if (count >= BUFFER_SIZE) {
       // バッファが満杯の場合、最も古いデータを上書き
       tail = (tail + 1) % BUFFER_SIZE;
@@ -46,7 +46,7 @@ class KeyStateFIFO {
   }
 
   // バッファからkeyStateを取り出し（FIFO）
-  bool pop(keyState& outKeyState) {
+  bool pop(KeyState& outKeyState) {
     if (count == 0) {
       return false;  // バッファが空
     }
@@ -60,7 +60,7 @@ class KeyStateFIFO {
   }
 
   // バッファの先頭データを取得（取り出さない）
-  bool peek(keyState& outKeyState) const {
+  bool peek(KeyState& outKeyState) const {
     if (count == 0) {
       return false;  // バッファが空
     }
@@ -72,7 +72,7 @@ class KeyStateFIFO {
   }
 
   // バッファの最新データを取得（取り出さない）
-  bool peekNewest(keyState& outKeyState) const {
+  bool peekNewest(KeyState& outKeyState) const {
     if (count == 0) {
       return false;  // バッファが空
     }
@@ -103,7 +103,7 @@ class KeyStateFIFO {
   }
 
   // 指定位置のデータを取得（0が最も古い、size()-1が最も新しい）
-  bool getAt(size_t index, keyState& outKeyState) {
+  bool getAt(size_t index, KeyState& outKeyState) {
     if (index >= count) {
       return false;
     }
@@ -116,10 +116,15 @@ class KeyStateFIFO {
 
  private:
   static constexpr size_t BUFFER_SIZE = 16;
-  keyState buffer[BUFFER_SIZE];  // 16個のkeyStateを格納
+  KeyState buffer[BUFFER_SIZE];  // 16個のkeyStateを格納
   size_t head;                   // 次に書き込む位置
   size_t tail;                   // 次に読み出す位置
   size_t count;                  // 現在格納されている要素数
+};
+
+struct KeyEvent {
+  bool pressed;
+  char c;
 };
 
 class YaCardputerKeyboard {
@@ -127,26 +132,42 @@ class YaCardputerKeyboard {
   YaCardputerKeyboard() { setKeymap(default_keymap); }
   virtual void begin() = 0;
   virtual void updateKeyState() = 0;
-  virtual bool popKeyState(keyState& outKeyState) {
-    return keyStateFIFO.pop(outKeyState);
+  virtual bool getLatestKeyEvent(KeyEvent& outEvent) const {
+    KeyState key;
+    if (keyStateFIFO.peekNewest(key)) {
+      outEvent.pressed = key.pressed;
+      outEvent.c = keymap[key.row][key.col];
+      return true;
+    }
+    return false;  // バッファが空
   }
-  virtual bool getLatestKeyState(keyState& outKeyState) const {
-    return keyStateFIFO.peekNewest(outKeyState);
-  }
-  virtual bool peekKeyState(keyState& outKeyState) const {
+
+  virtual bool peekKeyState(KeyState& outKeyState) const {
     return keyStateFIFO.peek(outKeyState);
   }
+
   virtual bool isBufferEmpty() const { return keyStateFIFO.isEmpty(); }
   virtual size_t getBufferSize() const { return keyStateFIFO.size(); }
-  virtual char getKey() {
-    keyState key;
-    if (!popKeyState(key)) {
-      return '\0';  // バッファが空
+  virtual bool getEvent(KeyEvent& outEvent) {
+    KeyState key;
+    if (keyStateFIFO.pop(key)) {
+      outEvent.pressed = key.pressed;
+      outEvent.c = keymap[key.row][key.col];
+      return true;
     }
-    return keymap[key.row][key.col];
+    return false;  // バッファが空
   }
+
+  virtual char getKey() {
+    KeyState key;
+    if (keyStateFIFO.pop(key)) {
+      return keymap[key.row][key.col];
+    }
+    return '\0';
+  }
+
   virtual bool isKeypressed(char c) {
-    keyState key;
+    KeyState key;
     for (int i = 0; i < keyStateFIFO.size(); i++) {
       if (keyStateFIFO.getAt(i, key)) {
         if (key.pressed && keymap[key.row][key.col] == c) {

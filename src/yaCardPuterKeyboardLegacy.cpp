@@ -53,14 +53,14 @@ void YaCardputerKeyboardLegacy::updateKeyState() {
     // 話されたキーをバッファに追加
     for (uint8_t c = 0; c < 7; c++) {
       if (released & (1 << c)) {
-        keyState key = {r, c, false};
+        KeyState key = {r, c, false};
         keyStateFIFO.push(key);
       }
     }
     for (uint8_t c = 0; c < 7; c++) {
       // 押されたキーをバッファに追加
       if (pressed & (1 << c)) {
-        keyState key = {r, c, true};
+        KeyState key = {r, c, true};
         keyStateFIFO.push(key);
       }
     }
