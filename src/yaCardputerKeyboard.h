@@ -129,7 +129,7 @@ struct KeyEvent {
 
 class YaCardputerKeyboard {
  public:
-  YaCardputerKeyboard() { setKeymap(default_keymap); }
+  YaCardputerKeyboard() { setKeymap(cardputer_keymap); }
   virtual void begin() = 0;
   virtual void updateKeyState() = 0;
   virtual bool getLatestKeyEvent(KeyEvent& outEvent) const {
