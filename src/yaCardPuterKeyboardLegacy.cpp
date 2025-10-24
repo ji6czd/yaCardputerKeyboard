@@ -88,15 +88,3 @@ void YaCardputerKeyboardLegacy::begin() {
   );
   delay(50);  // 1回はscan*(が実行されなければならない。)
 }
-
-/**
- * @brief 押されたキーを取得
- * @return 押されたキーの文字。バッファが空の場合はヌル文字を返す。
- */
-char YaCardputerKeyboardLegacy::getKey() {
-  keyState key;
-  if (!popKeyState(key)) {
-    return '\0';  // バッファが空ならばヌル文字を返す
-  }
-  return (key.pressed) ? keymap[key.row][key.col] : '\0';
-}

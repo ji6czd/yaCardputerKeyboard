@@ -8,6 +8,5 @@ class YaCardputerKeyboardADV : public YaCardputerKeyboard {
   YaCardputerKeyboardADV() = default;
   void begin() override;
   void updateKeyState() override;
-  char getKey() override;
 };
 #endif  // _YACARDPUTERKEYBOARDADV_H_

@@ -15,7 +15,6 @@ class YaCardputerKeyboardLegacy : public YaCardputerKeyboard {
   YaCardputerKeyboardLegacy() = default;
   void begin() override;
   void updateKeyState() override;
-  char getKey() override;
 
  private:
   // キーボードの状態を保持するためのマトリックス
@@ -34,45 +33,6 @@ class YaCardputerKeyboardLegacy : public YaCardputerKeyboard {
     digitalWrite(rowSelectPins[2], (row & 0b100) ? HIGH : LOW);  // A2
   }
   void scanKeys(KeyMatrix& keyMatrix);
-  /**
-   * @brief 1バイトのビットマスクから、最下位ビットの位置を示す整数を返す
-   * @param b ビットマスク（0〜255の範囲）
-   * @return Onになっている最下位ビットの位置（1〜8）。0の場合は0を返す。
-   * @note 例えば、bが0b00000100の場合、3を返す。
-   *       bが0b00000000の場合、0を返す。
-   *       bが0b00001100の場合、3を返す（最下位ビット）。
-   *       bが0b11111111の場合、1を返す（最下位ビット）。
-   */
-  int8_t getLSB(uint8_t b) {
-    if (b == 0) return 0;
-
-    int8_t i = 1;
-    while ((b & 1) == 0) {
-      b >>= 1;
-      i++;
-    }
-    return i;
-  }
-
-  /**
-   * @brief 1バイトのビットマスクから、最上位ビットの位置を示す整数を返す
-   * @param b ビットマスク（0〜255の範囲）
-   * @return Onになっている最上位ビットの位置（1〜8）。0の場合は0を返す。
-   * @note 例えば、bが0b00000100の場合、3を返す。
-   *       bが0b00000000の場合、0を返す。
-   *       bが0b00001100の場合、4を返す（最上位ビット）。
-   *       bが0b11111111の場合、8を返す（最上位ビット）。
-   */
-  int8_t getMSB(uint8_t b) {
-    if (b == 0) return 0;
-
-    int8_t i = 8;
-    while ((b & 0x80) == 0) {
-      b <<= 1;
-      i--;
-    }
-    return i;
-  }
 };
 
 #endif  // _YACARDPUTERKEYBOARDLEGACY_H_

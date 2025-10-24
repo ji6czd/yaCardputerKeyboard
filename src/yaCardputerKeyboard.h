@@ -103,7 +103,7 @@ class KeyStateFIFO {
   }
 
   // 指定位置のデータを取得（0が最も古い、size()-1が最も新しい）
-  bool getAt(size_t index, keyState& outKeyState) const {
+  bool getAt(size_t index, keyState& outKeyState) {
     if (index >= count) {
       return false;
     }
@@ -133,9 +133,30 @@ class YaCardputerKeyboard {
   virtual bool getLatestKeyState(keyState& outKeyState) const {
     return keyStateFIFO.peekNewest(outKeyState);
   }
+  virtual bool peekKeyState(keyState& outKeyState) const {
+    return keyStateFIFO.peek(outKeyState);
+  }
   virtual bool isBufferEmpty() const { return keyStateFIFO.isEmpty(); }
   virtual size_t getBufferSize() const { return keyStateFIFO.size(); }
-  virtual char getKey() = 0;
+  virtual char getKey() {
+    keyState key;
+    if (!popKeyState(key)) {
+      return '\0';  // バッファが空
+    }
+    return keymap[key.row][key.col];
+  }
+  virtual bool isKeypressed(char c) {
+    keyState key;
+    for (int i = 0; i < keyStateFIFO.size(); i++) {
+      if (keyStateFIFO.getAt(i, key)) {
+        if (key.pressed && keymap[key.row][key.col] == c) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   virtual bool setKeymap(const char keymap[8][7]) final {
     memcpy(this->keymap, keymap, sizeof(this->keymap));
     return true;

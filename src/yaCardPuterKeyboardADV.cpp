@@ -31,14 +31,6 @@ void YaCardputerKeyboardADV::begin() {
                           1);
 }
 
-char YaCardputerKeyboardADV::getKey() {
-  keyState key;
-  if (!popKeyState(key)) {
-    return '\0';  // バッファが空ならばヌル文字を返す
-  }
-  return (key.pressed) ? keymap[key.row][key.col] : '\0';
-}
-
 void YaCardputerKeyboardADV::updateKeyState() {
   while (keypad.available()) {
     union keyEvent {
